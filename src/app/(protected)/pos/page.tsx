@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/stores/authStore";
 import { usePosSessionStore } from "@/stores/posSessionStore";
 import { useCartStore } from "@/stores/cartStore";
@@ -16,9 +17,10 @@ import { PaymentModal } from "@/features/pos/components/PaymentModal";
 import { ClosingCashModal } from "@/features/pos/components/ClosingCashModal";
 import { ExpenseModal } from "@/features/pos/components/ExpenseModal";
 import { formatDateTime, formatCurrency } from "@/lib/formatting";
-import { ShoppingCart, Receipt } from "lucide-react";
+import { ShoppingCart, Receipt, RotateCcw } from "lucide-react";
 
 export default function PosPage() {
+  const router = useRouter();
   const { fullName } = useAuthStore();
   const { openingEntry, openingTime, openingAmount } = usePosSessionStore();
   const { logout } = useAuth();
@@ -69,6 +71,9 @@ export default function PosPage() {
           <span className="text-xs text-gray-400 hidden md:inline">
             Opened: {openingTime ? formatDateTime(openingTime) : "—"}
           </span>
+          <Button variant="secondary" size="sm" onClick={() => router.push("/returns")}>
+            <RotateCcw className="h-4 w-4" /> Returns
+          </Button>
           <Button variant="secondary" size="sm" onClick={() => setShowExpenseModal(true)}>
             <Receipt className="h-4 w-4" /> Expense
           </Button>

@@ -38,8 +38,8 @@ export const frappeApi = {
   getInvoice: (invoice_name: string) =>
     apiClient.get(`${API_BASE_PATH}.get_invoice?invoice_name=${invoice_name}`),
 
-  createReturn: (invoice_name: string, items?: any[]) =>
-    apiClient.post(`${API_BASE_PATH}.create_return`, { invoice_name, items }),
+  createReturn: (invoice_name: string, items?: any[], reason?: string) =>
+    apiClient.post(`${API_BASE_PATH}.create_return`, { invoice_name, items, reason }),
 
   // Inventory (Storekeeper)
   createItem: (payload: any) =>
