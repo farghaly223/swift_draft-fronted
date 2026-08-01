@@ -58,5 +58,5 @@ Thumbs.db
 _init_temp/
 swift-pos-temp/
 *.log
-"api.py" 
-"_fix_normalizer.py" 
+api.py
+_fix_normalizer.py
