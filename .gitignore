@@ -27,6 +27,17 @@ yarn-error.log*
 
 # local env files
 .env*.local
+.env
+.env.production
+
+# secrets / credentials
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+secrets.json
+credentials.json
 
 # vercel
 .vercel
@@ -34,3 +45,18 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# editor / os
+.idea/
+.vscode/
+Thumbs.db
+
+# agent-local state (machine-specific permissions, not shared config)
+.claude/settings.local.json
+
+# scratch / temp working dirs
+_init_temp/
+swift-pos-temp/
+*.log
+"api.py" 
+"_fix_normalizer.py" 
