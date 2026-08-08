@@ -122,25 +122,28 @@ export function encodeCode128(payload: string): { bits: string; text: string } |
 
 const MODULE_W = 2; // user units per module; the label CSS scales the whole SVG
 
-// Bar height in user units. Renders ~14mm tall at 46mm wide (see
-// symbolHeightMm) — 30% of symbol width, comfortably above the 15% floor, and
-// leaves ~1.8mm of slack in the 35mm budget so Chrome's mm-to-device-pixel
-// rounding cannot clip the price line.
+// Bar length in user units, along the sticker's 50mm axis once rotated.
 const BAR_H = 74;
 
 // Code128 requires a clear margin of at least 10 modules on each side. Unlike
 // EAN-13 the zones are symmetric, because no digit is printed inside them.
 const QUIET = 10;
 
-// 50mm sticker less 2mm padding on each side. Everything on the label is laid
-// out against this figure, so it lives here rather than only in the stylesheet.
+// The symbol is rotated 90deg, so its long axis runs down the sticker's HEIGHT.
+// 35mm tall less 2mm padding each side = 31mm for the code itself.
 //
-// This is the number that makes the labels scan. At 12 digits the symbol is 121
-// modules, so the module width is 46/121 = 0.380mm — comfortably above the
-// ~0.25mm handheld minimum, and just over 3 dots on a 203dpi thermal head, so
-// no module has to straddle a fractional dot. The previous 25mm-wide portrait
-// label gave 0.182mm (1.45 dots), which is why it would not read.
-const PRINTABLE_MM = 46;
+// At 12 digits the symbol is 121 modules, so the module width is 31/121 =
+// 0.256mm. That clears the ~0.25mm handheld minimum, but only just: on a 203dpi
+// head (0.125mm dots) it is 2.05 dots per module, so the printer has almost no
+// rounding headroom. Unrotated across the 46mm width it was 0.380mm / 3.04
+// dots, which is materially more robust — see the note in buildLabelDocument.
+const PRINTABLE_MM = 31;
+
+// Thickness of the rotated symbol column, across the sticker's 50mm width.
+// It holds the bar length plus the digit line beneath, and is fixed so the
+// upright text column to its right gets a predictable remainder:
+// 50mm - 4mm padding - 13mm - 2mm gap = 31mm of text width.
+const ROTATED_BAND_MM = 13;
 
 /**
  * Physical height, in mm, at which an SVG of `bits` fills PRINTABLE_MM wide
@@ -170,8 +173,10 @@ function symbolHeightMm(bits: string): number {
  * printable width, which shrank the digits with it until they were unreadable.
  * As HTML their size is set in points and is unaffected by the symbol's scale.
  *
- * The symbol is never rotated: bars run vertically across the sticker's width,
- * which is the normal reading orientation ("picket fence" to the scanner).
+ * The SVG itself is drawn unrotated — bars vertical, symbol running left to
+ * right. The label CSS rotates the containing element by 90deg. Rotating here
+ * instead would leave the digit line behind, and would make the viewBox aspect
+ * disagree with the box symbolHeightMm() computes.
  */
 function barcodeSvg(bits: string): string {
   let rects = "";
@@ -221,16 +226,30 @@ function labelBlock(item: BarcodeLabelItem, encoded: { bits: string; text: strin
   // A missing or malformed barcode still produces a usable label — the code is
   // printed as text. Silently skipping it would leave the storekeeper with a
   // short stack and no explanation.
+  //
+  // The symbol and its digits share one rotated wrapper so they turn together
+  // and stay aligned. Rotating them separately would drift them apart.
   const symbol = encoded
-    ? `<div class="barcode-image">${barcodeSvg(encoded.bits)}</div>` +
-      `<div class="barcode-number">${groupedDigits(encoded.text)}</div>`
+    ? `<div class="barcode-image">` +
+      `<div class="barcode-rot">` +
+      barcodeSvg(encoded.bits) +
+      `<div class="barcode-number">${groupedDigits(encoded.text)}</div>` +
+      `</div></div>`
+    : "";
+
+  // Without a symbol there is nothing to rotate, so the code falls back to the
+  // full width of the sticker rather than a 13mm column.
+  const fallback = encoded
+    ? ""
     : `<div class="nobarcode">${escapeHtml(item.barcode || "NO BARCODE")}</div>`;
 
   return `
     <div class="barcode-label">
-      <div class="item-name">${escapeHtml(item.item_name || item.item_code)}</div>
       ${symbol}
-      ${price}
+      <div class="label-text">
+        ${fallback}
+        ${price}
+      </div>
     </div>`;
 }
 
@@ -262,9 +281,11 @@ export function buildLabelDocument(item: BarcodeLabelItem, copies: number): stri
   /* One physical 50x35mm sticker per page. The roll is die-cut and the printer
      already stops at each gap, so the page must match the sticker exactly; any
      @page margin would shift content onto the next label. Labels advance down
-     the roll, one per page: no rotation, no transform, nothing side-by-side.
+     the roll, one per page — never side-by-side.
 
-     50mm wide is what makes these scan. See PRINTABLE_MM. */
+     The symbol is rotated 90deg so it runs along the sticker's 35mm height
+     instead of its 50mm width, which is what stopped it spanning two stickers.
+     That costs module width: see PRINTABLE_MM. */
   @page {
     size: 50mm 35mm;
     margin: 0;
@@ -291,6 +312,14 @@ export function buildLabelDocument(item: BarcodeLabelItem, copies: number): stri
     text-align: center;
     overflow: hidden;
 
+    /* Two columns: the rotated symbol on the left, the text stacked upright on
+       the right. Not flex-wrap — a single row that never wraps, so one label is
+       always exactly one sticker. */
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 2mm;
+
     page-break-after: always;
     break-after: page;
   }
@@ -302,16 +331,27 @@ export function buildLabelDocument(item: BarcodeLabelItem, copies: number): stri
     break-after: auto;
   }
 
-  .item-name {
-    font-size: 9pt;
-    font-weight: bold;
-    line-height: 1.15;
-    /* Fixed height so a long name can never push the symbol off the sticker. */
-    height: 6mm;
-    max-height: 6mm;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
+  /* The rotation column. Its width is the symbol's printed thickness (bar
+     length + the digit line beneath it); its height is the 31mm the symbol is
+     scaled to. Fixed so the text column gets a predictable remainder. */
+  .barcode-image {
+    flex: 0 0 ${ROTATED_BAND_MM}mm;
+    width: ${ROTATED_BAND_MM}mm;
+    height: ${PRINTABLE_MM}mm;
+    position: relative;
+  }
+
+  /* Rotate 90deg about the centre. The inner box is laid out at its natural
+     size — 31mm along what becomes the vertical axis — then turned, so the bars
+     run across the sticker's 35mm height and the code reads bottom-to-top.
+     This is the change that stops the symbol spanning two stickers. */
+  .barcode-rot {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: ${PRINTABLE_MM}mm;
+    transform: translate(-50%, -50%) rotate(-90deg);
+    transform-origin: center center;
   }
 
   /* Height is computed per symbol by symbolHeightMm() so the box matches the
@@ -323,22 +363,39 @@ export function buildLabelDocument(item: BarcodeLabelItem, copies: number): stri
     height: ${svgHeight}mm;
   }
 
+  /* The upright text column. min-width:0 lets the ellipsis work inside flex. */
+  .label-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    text-align: center;
+  }
+
+  .item-name {
+    font-size: 9pt;
+    font-weight: bold;
+    line-height: 1.15;
+    /* Two lines: the text column is ~13mm narrower than the old full width. */
+    max-height: 10mm;
+    overflow: hidden;
+  }
+
   /* Human-readable digits as HTML, not SVG text: inside the SVG they scaled
-     down with the symbol and became unreadable. */
+     down with the symbol and became unreadable. Rotated with the bars so the
+     number reads the same way round as the code it labels. */
   .barcode-number {
     font-family: monospace;
-    font-size: 8pt;
+    font-size: 7pt;
     line-height: 1;
-    letter-spacing: 1px;
-    margin-top: 1mm;
+    letter-spacing: 0.5px;
+    margin-top: 0.8mm;
     white-space: nowrap;
   }
 
   .price {
-    font-size: 11pt;
+    font-size: 12pt;
     font-weight: bold;
     line-height: 1;
-    margin-top: 1.5mm;
+    margin-top: 2mm;
   }
 
   .nobarcode {
