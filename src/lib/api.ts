@@ -27,10 +27,10 @@ export const frappeApi = {
 
   // Items
   itemByBarcode: (barcode: string) =>
-    apiClient.get(`${API_BASE_PATH}.item_by_barcode?barcode=${barcode}`),
+    apiClient.get(`${API_BASE_PATH}.item_by_barcode?barcode=${encodeURIComponent(barcode)}`),
 
   itemSearch: (q: string) =>
-    apiClient.get(`${API_BASE_PATH}.item_search?q=${q}`),
+    apiClient.get(`${API_BASE_PATH}.item_search?q=${encodeURIComponent(q)}`),
 
   createInvoice: (payload: { items: any[], payments: any[], customer?: string }) =>
     apiClient.post(`${API_BASE_PATH}.create_invoice`, payload),

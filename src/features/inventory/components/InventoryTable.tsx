@@ -8,7 +8,9 @@ import { useUIStore } from "@/stores/uiStore";
 import { Button } from "@/components/common/Button";
 import { Spinner } from "@/components/common/Spinner";
 import { EditInventoryItemModal, EditableRow } from "./EditInventoryItemModal";
-import { Search, Download, Pencil, Eye, X } from "lucide-react";
+import { PrintBarcodeModal } from "./PrintBarcodeModal";
+import type { BarcodeLabelItem } from "../services/barcodeLabel";
+import { Search, Download, Pencil, Eye, Printer, X } from "lucide-react";
 
 interface Props {
   onSelectItem: (item_code: string) => void;
@@ -25,6 +27,7 @@ export function InventoryTable({ onSelectItem }: Props) {
   const [barcode, setBarcode] = useState("");
   const [page, setPage] = useState(0);
   const [editing, setEditing] = useState<EditableRow | null>(null);
+  const [printing, setPrinting] = useState<BarcodeLabelItem | null>(null);
   const [isExporting, setIsExporting] = useState(false);
 
   // Debounced mirrors of the free-text inputs. Typing stays responsive while the
@@ -266,6 +269,25 @@ export function InventoryTable({ onSelectItem }: Props) {
                     <div className="flex items-center justify-end gap-1">
                       <button
                         onClick={() =>
+                          setPrinting({
+                            item_code: row.item_code,
+                            item_name: row.item_name,
+                            barcode: row.barcode,
+                            selling_price: row.selling_price,
+                          })
+                        }
+                        disabled={!row.barcode}
+                        title={
+                          row.barcode
+                            ? "Print barcode"
+                            : "No barcode — add one from Edit first"
+                        }
+                        className="p-1.5 rounded-md text-gray-400 hover:text-primary-600 hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:hover:text-gray-400 disabled:hover:bg-transparent disabled:cursor-not-allowed"
+                      >
+                        <Printer className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() =>
                           setEditing({
                             item_code: row.item_code,
                             item_name: row.item_name,
@@ -327,6 +349,12 @@ export function InventoryTable({ onSelectItem }: Props) {
           setEditing(null);
           queryClient.invalidateQueries({ queryKey: ["inventory_list"] });
         }}
+      />
+
+      <PrintBarcodeModal
+        isOpen={printing !== null}
+        item={printing}
+        onClose={() => setPrinting(null)}
       />
     </div>
   );
