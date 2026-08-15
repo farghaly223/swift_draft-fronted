@@ -16,4 +16,4 @@ export interface MeResponse {
   full_name: string;
 }
 
-export type UserRole = "Swift Cashier" | "Swift Storekeeper";
+export type UserRole = "Swift Cashier" | "Swift Storekeeper" | "swift manager";

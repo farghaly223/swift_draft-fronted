@@ -1,0 +1,23 @@
+{
+ "doctype": "DocType",
+ "name": "Cash Drawer Transaction",
+ "module": "Swift",
+ "autoname": "CDT-.YYYY.-.#####",
+ "engine": "InnoDB",
+ "fields": [
+  {"fieldname":"transaction_date","fieldtype":"Date","label":"Transaction Date","reqd":1,"default":"Today","in_list_view":1},
+  {"fieldname":"transaction_time","fieldtype":"Time","label":"Transaction Time","reqd":1},
+  {"fieldname":"transaction_type","fieldtype":"Select","label":"Transaction Type","options":"Cash In\nCash Out\nAdjustment","reqd":1,"in_list_view":1},
+  {"fieldname":"amount","fieldtype":"Currency","label":"Amount","reqd":1,"in_list_view":1},
+  {"fieldname":"payment_method","fieldtype":"Select","label":"Payment Method","options":"Cash\nInsta pay\nBank Transfer","default":"Cash"},
+  {"fieldname":"reason","fieldtype":"Data","label":"Reason","reqd":1},
+  {"fieldname":"notes","fieldtype":"Small Text","label":"Notes"},
+  {"fieldname":"reference","fieldtype":"Data","label":"Reference"},
+  {"fieldname":"user","fieldtype":"Link","label":"Submitted By","options":"User","read_only":1},
+  {"fieldname":"status","fieldtype":"Select","label":"Status","options":"Submitted\nCancelled","default":"Submitted","read_only":1}
+ ],
+ "permissions": [
+  {"role":"swift manager","read":1,"write":1,"create":1,"delete":0,"report":1,"export":1},
+  {"role":"Swift Manager","read":1,"write":1,"create":1,"delete":0,"report":1,"export":1}
+ ]
+}

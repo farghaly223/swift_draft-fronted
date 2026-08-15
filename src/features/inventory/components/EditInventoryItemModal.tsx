@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, FormEvent } from "react";
+import { useState, useEffect, FormEvent, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { frappeApi } from "@/lib/api";
 import { extractFrappeError } from "@/lib/utils";
@@ -8,6 +8,7 @@ import { useUIStore } from "@/stores/uiStore";
 import { Modal } from "@/components/common/Modal";
 import { Button } from "@/components/common/Button";
 import { Input } from "@/components/common/Input";
+import { ImagePlus } from "lucide-react";
 
 export interface EditableRow {
   item_code: string;
@@ -17,6 +18,7 @@ export interface EditableRow {
   cost_price: number;
   selling_price: number;
   qty: number;
+  image?: string | null;
 }
 
 interface Props {
@@ -37,6 +39,8 @@ export function EditInventoryItemModal({ isOpen, row, onClose, onSaved }: Props)
   const [qty, setQty] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Re-seed the form whenever a different row is opened.
   useEffect(() => {
@@ -106,10 +110,58 @@ export function EditInventoryItemModal({ isOpen, row, onClose, onSaved }: Props)
     }
   };
 
+  const handleImage = async (file?: File) => {
+    if (!row || !file) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      setError("Choose a JPEG, PNG, or WebP image.");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setError("Image must be smaller than 2 MB.");
+      return;
+    }
+    setError("");
+    setIsUploading(true);
+    try {
+      await frappeApi.uploadItemImage(row.item_code, file);
+      showToast(`${row.item_name} image updated`, "success");
+      onSaved();
+    } catch (err) {
+      setError(extractFrappeError(err));
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Edit Item" maxWidth="md">
       <form onSubmit={handleSubmit} className="space-y-4">
         <p className="text-xs text-gray-400 font-mono">{row?.item_code}</p>
+
+        <div className="flex items-center justify-between gap-3 border border-gray-200 rounded-lg p-3">
+          <div>
+            <p className="text-sm font-medium text-gray-700">Product image</p>
+            <p className="text-xs text-gray-400">JPEG, PNG or WebP, maximum 2 MB</p>
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="hidden"
+            onChange={(event) => handleImage(event.target.files?.[0])}
+          />
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            isLoading={isUploading}
+            disabled={isSubmitting || isUploading}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <ImagePlus className="h-4 w-4" /> {row?.image ? "Change Image" : "Add Image"}
+          </Button>
+        </div>
 
         <Input
           label="Item Name"

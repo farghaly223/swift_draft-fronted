@@ -11,6 +11,8 @@ import { EditInventoryItemModal, EditableRow } from "./EditInventoryItemModal";
 import { PrintBarcodeModal } from "./PrintBarcodeModal";
 import type { BarcodeLabelItem } from "../services/barcodeLabel";
 import { Search, Download, Pencil, Eye, Printer, X } from "lucide-react";
+import { Camera } from "lucide-react";
+import { ProductImageModal } from "@/components/common/ProductImageModal";
 
 interface Props {
   onSelectItem: (item_code: string) => void;
@@ -29,6 +31,7 @@ export function InventoryTable({ onSelectItem }: Props) {
   const [editing, setEditing] = useState<EditableRow | null>(null);
   const [printing, setPrinting] = useState<BarcodeLabelItem | null>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [preview, setPreview] = useState<{ image: string; name: string } | null>(null);
 
   // Debounced mirrors of the free-text inputs. Typing stays responsive while the
   // query refires ~250ms after the last keystroke instead of on every character.
@@ -267,6 +270,15 @@ export function InventoryTable({ onSelectItem }: Props) {
                   </td>
                   <td className="px-3 py-2">
                     <div className="flex items-center justify-end gap-1">
+                      {row.image && (
+                        <button
+                          onClick={() => setPreview({ image: row.image, name: row.item_name })}
+                          title="View image"
+                          className="p-1.5 rounded-md text-gray-400 hover:text-primary-600 hover:bg-gray-100 transition-colors"
+                        >
+                          <Camera className="h-4 w-4" />
+                        </button>
+                      )}
                       <button
                         onClick={() =>
                           setPrinting({
@@ -296,6 +308,7 @@ export function InventoryTable({ onSelectItem }: Props) {
                             cost_price: row.cost_price,
                             selling_price: row.selling_price,
                             qty: row.qty,
+                            image: row.image,
                           })
                         }
                         title="Edit"
@@ -355,6 +368,11 @@ export function InventoryTable({ onSelectItem }: Props) {
         isOpen={printing !== null}
         item={printing}
         onClose={() => setPrinting(null)}
+      />
+      <ProductImageModal
+        image={preview?.image ?? null}
+        itemName={preview?.name ?? "Product image"}
+        onClose={() => setPreview(null)}
       />
     </div>
   );

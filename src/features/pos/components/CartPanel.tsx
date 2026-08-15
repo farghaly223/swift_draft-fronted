@@ -13,6 +13,7 @@ interface Props {
 export function CartPanel({ onCheckout }: Props) {
   const items = useCartStore((s) => s.items);
   const updateQty = useCartStore((s) => s.updateQty);
+  const updateRate = useCartStore((s) => s.updateRate);
   const removeItem = useCartStore((s) => s.removeItem);
   const clearCart = useCartStore((s) => s.clearCart);
   const getTotal = useCartStore((s) => s.getTotal);
@@ -49,6 +50,40 @@ export function CartPanel({ onCheckout }: Props) {
               >
                 <Trash2 className="h-4 w-4" />
               </button>
+            </div>
+            <div className="mt-2">
+              <label
+                htmlFor={`rate-${item.item_code}`}
+                className="block text-xs font-medium text-gray-500 mb-1"
+              >
+                Unit price for this sale
+                {item.minimum_rate > 0 && (
+                  <span className="font-normal"> (minimum {formatCurrency(item.minimum_rate)})</span>
+                )}
+              </label>
+              <input
+                id={`rate-${item.item_code}`}
+                type="number"
+                min={Math.max(0.01, item.minimum_rate)}
+                step="0.01"
+                defaultValue={item.rate}
+                onBlur={(event) => {
+                  const rate = Number(event.target.value);
+                  if (rate < item.minimum_rate) {
+                    event.target.value = String(item.rate);
+                    showToast(
+                      `Price cannot be below ${formatCurrency(item.minimum_rate)}`,
+                      "warning",
+                    );
+                    return;
+                  }
+                  if (!updateRate(item.item_code, rate)) {
+                    event.target.value = String(item.rate);
+                    showToast("Unit price must be greater than zero", "warning");
+                  }
+                }}
+                className="w-full h-9 rounded-md border border-gray-300 px-2 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
             </div>
             <div className="flex items-center gap-2 mt-2">
               <button

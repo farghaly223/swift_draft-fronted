@@ -159,7 +159,7 @@ export function ReturnScreen() {
               type="text"
               value={invoiceNo}
               onChange={(e) => setInvoiceNo(e.target.value)}
-              placeholder="Scan or enter invoice number (ACC-SINV-...)"
+              placeholder="Enter full invoice number or last 5 digits"
               autoFocus
               className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             />

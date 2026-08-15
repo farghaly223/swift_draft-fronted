@@ -1,0 +1,24 @@
+{
+ "doctype":"DocType",
+ "name":"Daily Business Report",
+ "module":"Swift",
+ "autoname":"DBR-.YYYY.-.MM.-.#####",
+ "engine":"InnoDB",
+ "fields":[
+  {"fieldname":"report_date","fieldtype":"Date","label":"Business Date","reqd":1,"unique":1,"in_list_view":1},
+  {"fieldname":"company","fieldtype":"Link","label":"Company","options":"Company","reqd":1},
+  {"fieldname":"total_sales","fieldtype":"Currency","label":"Total Sales","read_only":1},
+  {"fieldname":"money_received","fieldtype":"Currency","label":"Money Received","read_only":1},
+  {"fieldname":"total_expenses","fieldtype":"Currency","label":"Expenses","read_only":1},
+  {"fieldname":"gross_profit","fieldtype":"Currency","label":"Gross Profit","read_only":1},
+  {"fieldname":"net_result","fieldtype":"Currency","label":"Net Result","read_only":1},
+  {"fieldname":"invoices","fieldtype":"Int","label":"Invoices","read_only":1},
+  {"fieldname":"items_sold","fieldtype":"Float","label":"Items Sold","read_only":1},
+  {"fieldname":"cashiers","fieldtype":"JSON","label":"Sales by Cashier","read_only":1},
+  {"fieldname":"items","fieldtype":"Table","label":"Top Items","options":"Daily Business Report Item","read_only":1}
+ ],
+ "permissions":[
+  {"role":"swift manager","read":1,"write":1,"create":1,"delete":0,"report":1,"export":1},
+  {"role":"Swift Manager","read":1,"write":1,"create":1,"delete":0,"report":1,"export":1}
+ ]
+}

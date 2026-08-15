@@ -297,10 +297,7 @@ A comment in `lib/axios.ts` records the practical trigger: this fires whenever a
 Fetched lazily on the first write, cached in a module-scoped variable, and tried against two paths because Frappe has moved the getter between versions:
 
 ```ts
-const CSRF_ENDPOINTS = [
-  "/api/method/frappe.sessions.get_csrf_token",
-  "/api/method/frappe.client.get_csrf_token",
-];
+const CSRF_ENDPOINT = "/api/method/frappe.sessions.get_csrf_token";
 ```
 
 Concurrent fetches are de-duplicated through a single in-flight promise, so a burst of writes triggers exactly one token request:

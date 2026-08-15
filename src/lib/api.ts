@@ -1,6 +1,12 @@
 import apiClient from "./axios";
 import { API_BASE_PATH } from "@/config/constants";
 
+interface CreateInvoicePayload {
+  items: { item_code: string; qty: number; rate: number }[];
+  payments: { mode_of_payment: string; amount: number }[];
+  customer?: string;
+}
+
 export const frappeApi = {
   // Auth
   login: (email: string, password: string) =>
@@ -32,7 +38,7 @@ export const frappeApi = {
   itemSearch: (q: string) =>
     apiClient.get(`${API_BASE_PATH}.item_search?q=${encodeURIComponent(q)}`),
 
-  createInvoice: (payload: { items: any[], payments: any[], customer?: string }) =>
+  createInvoice: (payload: CreateInvoicePayload) =>
     apiClient.post(`${API_BASE_PATH}.create_invoice`, payload),
 
   getInvoice: (invoice_name: string) =>
@@ -62,6 +68,13 @@ export const frappeApi = {
 
   getItem: (item_code: string) =>
     apiClient.get(`${API_BASE_PATH}.get_item?item_code=${encodeURIComponent(item_code)}`),
+
+  uploadItemImage: (item_code: string, file: File) => {
+    const form = new FormData();
+    form.append("item_code", item_code);
+    form.append("file", file);
+    return apiClient.post(`${API_BASE_PATH}.upload_item_image`, form);
+  },
 
   // Read-only
   listWarehouses: () =>
@@ -129,4 +142,34 @@ export const frappeApi = {
     qty?: number;
   }) =>
     apiClient.put(`${API_BASE_PATH}.update_inventory_item`, payload),
+
+  managerDashboardSummary: (from_date?: string, to_date?: string) =>
+    apiClient.post(`${API_BASE_PATH}.manager_dashboard_summary`, {
+      from_date,
+      to_date,
+    }),
+
+  createCashDrawerTransaction: (payload: {
+    transaction_type: "Cash In" | "Cash Out" | "Adjustment";
+    amount: number;
+    reason: string;
+    notes?: string;
+    reference?: string;
+  }) => apiClient.post(`${API_BASE_PATH}.create_cash_drawer_transaction`, payload),
+
+  managerCreateUser: (payload: {
+    full_name: string;
+    email: string;
+    phone: string;
+    user_type: "cashier" | "storekeeper";
+    password: string;
+  }) => apiClient.post(`${API_BASE_PATH}.manager_create_user`, payload),
+
+  managerListUsers: () => apiClient.get(`${API_BASE_PATH}.manager_list_users`),
+
+  managerUpdateUser: (payload: {
+    current_email: string;
+    email?: string;
+    password?: string;
+  }) => apiClient.post(`${API_BASE_PATH}.manager_update_user`, payload),
 };

@@ -26,6 +26,7 @@ export function BarcodeScanner() {
         item_code: data.item_code,
         item_name: data.item_name,
         rate: data.rate,
+        minimum_rate: data.minimum_rate,
         uom: data.uom,
         stock_qty: data.stock_qty,
         image: data.image,

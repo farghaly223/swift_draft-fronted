@@ -7,7 +7,8 @@ import { extractFrappeError } from "@/lib/utils";
 import { useUIStore } from "@/stores/uiStore";
 import { Button } from "@/components/common/Button";
 import { Spinner } from "@/components/common/Spinner";
-import { ArrowLeft, Plus, Trash2, Barcode } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Barcode, Camera } from "lucide-react";
+import { ProductImageModal } from "@/components/common/ProductImageModal";
 
 interface Props {
   itemCode: string;
@@ -20,6 +21,7 @@ export function ItemDetail({ itemCode, onBack }: Props) {
   const [newBarcode, setNewBarcode] = useState("");
   const [addingBarcode, setAddingBarcode] = useState(false);
   const [removingBarcode, setRemovingBarcode] = useState<string | null>(null);
+  const [showImage, setShowImage] = useState(false);
 
   const { data: item, isLoading, error } = useQuery({
     queryKey: ["item_detail", itemCode],
@@ -80,7 +82,14 @@ export function ItemDetail({ itemCode, onBack }: Props) {
       <div className="bg-white border border-gray-200 rounded-lg p-5">
         <div className="flex items-start gap-4">
           {item.image && (
-            <img src={item.image} alt="" className="w-20 h-20 rounded-lg object-cover" />
+            <button
+              type="button"
+              title="View image"
+              onClick={() => setShowImage(true)}
+              className="w-20 h-20 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-primary-600 hover:bg-gray-50"
+            >
+              <Camera className="h-5 w-5" />
+            </button>
           )}
           <div className="flex-1">
             <h2 className="text-lg font-semibold text-gray-900">{item.item_name}</h2>
@@ -104,6 +113,7 @@ export function ItemDetail({ itemCode, onBack }: Props) {
           </div>
         </div>
       </div>
+      <ProductImageModal image={showImage ? item.image : null} itemName={item.item_name} onClose={() => setShowImage(false)} />
 
       {/* Barcodes */}
       <div className="bg-white border border-gray-200 rounded-lg p-5">

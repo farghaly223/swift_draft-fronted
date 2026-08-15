@@ -231,13 +231,10 @@ Four steps, in order:
 
 **1. Device ID.** `X-Device-Id` from `getOrCreateDeviceId()` — a `crypto.randomUUID()` persisted in `localStorage` under `swift_pos_device_id`.
 
-**2. CSRF token (writes only).** Frappe requires `X-Frappe-CSRF-Token` on writes when a session cookie is present. The token is fetched lazily and cached in a module variable, trying two endpoints because Frappe has moved the getter across versions:
+**2. CSRF token (writes only).** Frappe requires `X-Frappe-CSRF-Token` on writes when a session cookie is present. The token is fetched lazily from the supported session endpoint and cached in a module variable:
 
 ```ts
-const CSRF_ENDPOINTS = [
-  "/api/method/frappe.sessions.get_csrf_token",
-  "/api/method/frappe.client.get_csrf_token",
-];
+const CSRF_ENDPOINT = "/api/method/frappe.sessions.get_csrf_token";
 ```
 
 Concurrent fetches are de-duplicated through a single in-flight promise, so a burst of writes triggers one token request.

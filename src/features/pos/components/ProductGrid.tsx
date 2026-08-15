@@ -1,11 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { frappeApi } from "@/lib/api";
 import { useCartStore } from "@/stores/cartStore";
 import { useUIStore } from "@/stores/uiStore";
 import { formatCurrency } from "@/lib/formatting";
 import { Spinner } from "@/components/common/Spinner";
+import { ProductImageModal } from "@/components/common/ProductImageModal";
+import { Camera } from "lucide-react";
 import type { PosItem } from "@/types/cart";
 
 interface Props {
@@ -15,9 +18,10 @@ interface Props {
 export function ProductGrid({ searchQuery }: Props) {
   const addItem = useCartStore((s) => s.addItem);
   const showToast = useUIStore((s) => s.showToast);
+  const [preview, setPreview] = useState<{ image: string; name: string } | null>(null);
 
   const { data: items = [], isLoading } = useQuery<PosItem[]>({
-    queryKey: ["item_search", searchQuery],
+    queryKey: ["item_search", "priced-v2", searchQuery],
     queryFn: async () => {
       if (!searchQuery || searchQuery.length < 2) return [];
       const { data } = await frappeApi.itemSearch(searchQuery);
@@ -53,44 +57,36 @@ export function ProductGrid({ searchQuery }: Props) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 p-3">
       {items.map((item) => (
-        <button
+        <div
           key={item.item_code}
-          disabled={item.stock_qty <= 0}
-          onClick={() => {
-            if (item.stock_qty <= 0) {
-              showToast(`${item.item_name} is out of stock`, "error");
-              return;
-            }
-            if (addItem(item)) {
-              showToast(`Added ${item.item_name}`, "success", 1200);
-            } else {
-              showToast(
-                `Only ${item.stock_qty} ${item.uom} of ${item.item_name} in stock`,
-                "warning",
-              );
-            }
-          }}
-          className="bg-white border border-gray-200 rounded-lg p-3 text-left hover:border-primary-400 hover:shadow-sm transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-gray-200 disabled:hover:shadow-none disabled:active:scale-100"
+          className="relative bg-white border border-gray-200 rounded-lg p-3 text-left hover:border-primary-400 hover:shadow-sm transition-all"
         >
+          <button
+            disabled={item.stock_qty <= 0}
+            onClick={() => {
+              if (addItem(item)) showToast(`Added ${item.item_name}`, "success", 1200);
+              else showToast(`Only ${item.stock_qty} ${item.uom} of ${item.item_name} in stock`, "warning");
+            }}
+            className="w-full text-left disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <p className="text-sm font-medium text-gray-900 line-clamp-2 leading-tight pr-7">{item.item_name}</p>
+            <p className="text-xs text-gray-400 mt-0.5">{item.item_code}</p>
+            <p className="text-sm font-semibold text-primary-600 mt-1">{formatCurrency(item.rate)}</p>
+            <p className="text-xs text-gray-400">Stock: {item.stock_qty} {item.uom}</p>
+          </button>
           {item.image && (
-            <img
-              src={item.image}
-              alt={item.item_name}
-              className="w-full h-20 object-cover rounded mb-2"
-            />
+            <button
+              type="button"
+              title="View image"
+              onClick={() => setPreview({ image: item.image!, name: item.item_name })}
+              className="absolute top-2 right-2 p-1.5 rounded-md text-gray-400 hover:text-primary-600 hover:bg-gray-100"
+            >
+              <Camera className="h-4 w-4" />
+            </button>
           )}
-          <p className="text-sm font-medium text-gray-900 line-clamp-2 leading-tight">
-            {item.item_name}
-          </p>
-          <p className="text-xs text-gray-400 mt-0.5">{item.item_code}</p>
-          <p className="text-sm font-semibold text-primary-600 mt-1">
-            {formatCurrency(item.rate)}
-          </p>
-          <p className="text-xs text-gray-400">
-            Stock: {item.stock_qty} {item.uom}
-          </p>
-        </button>
+        </div>
       ))}
+      <ProductImageModal image={preview?.image ?? null} itemName={preview?.name ?? "Product image"} onClose={() => setPreview(null)} />
     </div>
   );
 }

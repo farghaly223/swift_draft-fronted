@@ -7,6 +7,8 @@ export function getRedirectForRole(role: UserRole | null): string {
       return ROUTES.POS;
     case ROLES.STOREKEEPER:
       return ROUTES.INVENTORY;
+    case ROLES.MANAGER:
+      return ROUTES.MANAGER;
     default:
       return ROUTES.LOGIN;
   }

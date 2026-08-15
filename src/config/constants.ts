@@ -7,10 +7,12 @@ export const HEARTBEAT_INTERVAL_MS = 30_000;
 export const ROLES = {
   CASHIER: "Swift Cashier",
   STOREKEEPER: "Swift Storekeeper",
+  MANAGER: "swift manager",
 } as const;
 
 export const ROUTES = {
   LOGIN: "/login",
   POS: "/pos",
   INVENTORY: "/inventory",
+  MANAGER: "/manager",
 } as const;

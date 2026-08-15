@@ -13,26 +13,21 @@ const apiClient = axios.create({
 // happens whenever another tab (e.g. the Frappe desk) has set a sid cookie.
 let csrfToken: string | null = null;
 let csrfInFlight: Promise<string | null> | null = null;
-
-// Frappe has exposed the token getter under different paths across versions.
-const CSRF_ENDPOINTS = [
-  "/api/method/frappe.sessions.get_csrf_token",
-  "/api/method/frappe.client.get_csrf_token",
-];
+let csrfFetchFailed = false;
 
 async function requestCsrfToken(): Promise<string | null> {
-  for (const path of CSRF_ENDPOINTS) {
-    try {
-      const { data } = await axios.get(`${env.FRAPPE_URL}${path}`, {
-        withCredentials: true,
-      });
-      const token = data?.message;
-      if (typeof token === "string" && token) return token;
-    } catch {
-      // try the next candidate path
-    }
+  try {
+    const { data } = await axios.get(
+      `${env.FRAPPE_URL}/api/method/frappe.sessions.get_csrf_token`,
+      { withCredentials: true },
+    );
+    const token = data?.message;
+    return typeof token === "string" && token ? token : null;
+  } catch {
+    // The write request will proceed without adding a header and Frappe will
+    // return its normal CSRF error; no invalid fallback endpoint is attempted.
+    return null;
   }
-  return null;
 }
 
 // De-duplicates concurrent fetches so a burst of writes only hits the server once.
@@ -47,6 +42,7 @@ function fetchCsrfToken(): Promise<string | null> {
 
 export function setCsrfToken(token: string | null) {
   csrfToken = token;
+  csrfFetchFailed = false;
 }
 
 // login is allow_guest and runs before a session exists — never gate it on CSRF.
@@ -64,8 +60,9 @@ apiClient.interceptors.request.use(async (config) => {
   const url = config.url || "";
 
   if (isWrite && typeof window !== "undefined" && !isAuthEndpoint(url)) {
-    if (!csrfToken) {
+    if (!csrfToken && !csrfFetchFailed) {
       csrfToken = await fetchCsrfToken();
+      csrfFetchFailed = !csrfToken;
     }
     if (csrfToken) {
       config.headers["X-Frappe-CSRF-Token"] = csrfToken;
@@ -124,6 +121,7 @@ apiClient.interceptors.response.use(
         const fresh = await fetchCsrfToken();
         if (fresh) {
           csrfToken = fresh;
+          csrfFetchFailed = false;
           const retryConfig = { ...error.config, __csrfRetried: true } as any;
           retryConfig.headers = {
             ...retryConfig.headers,
@@ -131,6 +129,7 @@ apiClient.interceptors.response.use(
           };
           return apiClient.request(retryConfig);
         }
+        csrfFetchFailed = true;
       }
 
       if (status === 401 && !isAuthEndpoint(url)) {

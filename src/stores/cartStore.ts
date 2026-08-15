@@ -7,6 +7,7 @@ interface CartState {
 
   addItem: (item: Omit<CartItem, "qty"> & { qty?: number }) => boolean;
   updateQty: (item_code: string, qty: number) => boolean;
+  updateRate: (item_code: string, rate: number) => boolean;
   removeItem: (item_code: string) => void;
   clearCart: () => void;
   setCustomer: (customer: string | null) => void;
@@ -56,6 +57,17 @@ export const useCartStore = create<CartState>((set, get) => ({
         i.item_code === item_code ? { ...i, qty } : i
       ),
     });
+    return true;
+  },
+
+  updateRate: (item_code, rate) => {
+    if (!Number.isFinite(rate) || rate <= 0) return false;
+
+    set((state) => ({
+      items: state.items.map((item) =>
+        item.item_code === item_code ? { ...item, rate } : item
+      ),
+    }));
     return true;
   },
 
