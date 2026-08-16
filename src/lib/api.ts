@@ -5,6 +5,10 @@ interface CreateInvoicePayload {
   items: { item_code: string; qty: number; rate: number }[];
   payments: { mode_of_payment: string; amount: number }[];
   customer?: string;
+  customer_name?: string;
+  mobile_no?: string;
+  governorate?: string;
+  notes?: string;
 }
 
 export const frappeApi = {
@@ -149,6 +153,15 @@ export const frappeApi = {
       to_date,
     }),
 
+  managerGetInvoice: (invoice_name: string) =>
+    apiClient.get(`${API_BASE_PATH}.manager_get_invoice`, { params: { invoice_name } }),
+
+  managerCustomerSearch: (search: string, start = 0, limit = 20) =>
+    apiClient.get(`${API_BASE_PATH}.manager_customer_search`, { params: { search, start, limit } }),
+
+  managerExportCustomers: (month?: string) =>
+    apiClient.get(`${API_BASE_PATH}.manager_export_customers`, { params: { month }, responseType: "blob" }),
+
   createCashDrawerTransaction: (payload: {
     transaction_type: "Cash In" | "Cash Out" | "Adjustment";
     amount: number;
@@ -172,4 +185,21 @@ export const frappeApi = {
     email?: string;
     password?: string;
   }) => apiClient.post(`${API_BASE_PATH}.manager_update_user`, payload),
+
+  customerSearchAccess: (search: string) =>
+    apiClient.get(`${API_BASE_PATH}.customer_search_access`, { params: { search } }),
+
+  managerSetCustomerSearchAccess: (user_email: string, enabled: boolean) =>
+    apiClient.post(`${API_BASE_PATH}.manager_set_customer_search_access`, { user_email, enabled: enabled ? 1 : 0 }),
+
+  managerExpenseAccounts: () => apiClient.get(`${API_BASE_PATH}.manager_expense_accounts`),
+
+  managerCreateExpenseAccount: (account_name: string, parent_account: string) =>
+    apiClient.post(`${API_BASE_PATH}.manager_create_expense_account`, { account_name, parent_account }),
+
+  managerSetExpenseAccountEnabled: (account: string, enabled: boolean) =>
+    apiClient.post(`${API_BASE_PATH}.manager_set_expense_account_enabled`, { account, enabled: enabled ? 1 : 0 }),
+
+  managerCreateExpense: (payload: { amount: number; expense_date: string; expense_account: string; paid_from_account: string; description?: string; reference?: string }) =>
+    apiClient.post(`${API_BASE_PATH}.manager_create_expense`, payload),
 };

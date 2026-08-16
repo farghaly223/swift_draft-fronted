@@ -41,6 +41,10 @@ export function PaymentModal({ isOpen, onClose, paymentModes }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<InvoiceResult | null>(null);
+  const [customerName, setCustomerName] = useState("");
+  const [mobileNo, setMobileNo] = useState("");
+  const [governorate, setGovernorate] = useState("");
+  const [notes, setNotes] = useState("");
 
   useEffect(() => {
     if (isOpen) {
@@ -48,6 +52,7 @@ export function PaymentModal({ isOpen, onClose, paymentModes }: Props) {
       setError("");
       setResult(null);
       setSelectedMode(defaultMode);
+      setNotes("");
     }
   }, [isOpen]);
 
@@ -63,6 +68,10 @@ export function PaymentModal({ isOpen, onClose, paymentModes }: Props) {
         items: items.map((i) => ({ item_code: i.item_code, qty: i.qty, rate: i.rate })),
         payments: [{ mode_of_payment: selectedMode, amount: cartTotal }],
         customer: customer || undefined,
+        customer_name: customerName.trim() || undefined,
+        mobile_no: mobileNo.trim() || undefined,
+        governorate: governorate.trim() || undefined,
+        notes: notes.trim() || undefined,
       });
       setResult(data);
       setAmountGiven(String((data.grand_total).toFixed(2)));
@@ -176,6 +185,17 @@ export function PaymentModal({ isOpen, onClose, paymentModes }: Props) {
         <div className="flex justify-between text-lg font-bold border-t pt-2">
           <span>Cart Total</span>
           <span className="text-primary-600">{formatCurrency(cartTotal)}</span>
+        </div>
+
+        <div className="grid gap-2 sm:grid-cols-3">
+          <input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Customer name" className="rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+          <input value={mobileNo} onChange={(e) => setMobileNo(e.target.value)} placeholder="Mobile number" inputMode="tel" className="rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+          <input value={governorate} onChange={(e) => setGovernorate(e.target.value)} placeholder="Governorate" className="rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium text-gray-700">Notes</label>
+          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} maxLength={1000} placeholder="Optional invoice notes" className="w-full resize-y rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
         </div>
 
         <div>

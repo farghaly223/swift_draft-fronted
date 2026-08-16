@@ -16,6 +16,7 @@ import { CartPanel } from "@/features/pos/components/CartPanel";
 import { PaymentModal } from "@/features/pos/components/PaymentModal";
 import { ClosingCashModal } from "@/features/pos/components/ClosingCashModal";
 import { ExpenseModal } from "@/features/pos/components/ExpenseModal";
+import { CustomerSearch } from "@/features/pos/components/CustomerSearch";
 import { formatDateTime, formatCurrency } from "@/lib/formatting";
 import { ShoppingCart, Receipt, RotateCcw } from "lucide-react";
 
@@ -78,7 +79,7 @@ export default function PosPage() {
             <Receipt className="h-4 w-4" /> Expense
           </Button>
           <Button variant="danger" size="sm" onClick={() => setShowClosingModal(true)}>
-            End Shift
+            Close Shift
           </Button>
         </div>
       </header>
@@ -89,6 +90,7 @@ export default function PosPage() {
         <div className="flex-1 flex flex-col min-w-0">
           <div className="p-3 border-b border-gray-200 bg-white">
             <BarcodeScanner />
+            <CustomerSearch />
             <input
               type="text"
               value={searchQuery}

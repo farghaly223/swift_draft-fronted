@@ -2,6 +2,7 @@
 
 import { useState, FormEvent } from "react";
 import { usePosSessionStore } from "@/stores/posSessionStore";
+import { useAuthStore } from "@/stores/authStore";
 import { useUIStore } from "@/stores/uiStore";
 import { Modal } from "@/components/common/Modal";
 import { Button } from "@/components/common/Button";
@@ -20,12 +21,29 @@ export function ClosingCashModal({ isOpen, onClose, onClosed }: ClosingCashModal
   const [amount, setAmount] = useState("");
   const [validationError, setValidationError] = useState("");
   const [isClosing, setIsClosing] = useState(false);
+  const fullName = useAuthStore((s) => s.fullName);
   const [result, setResult] = useState<{
     closing_entry: string;
     expected_amount: number;
     total_expenses: number;
+    invoices: number;
+    items_sold: number;
+    total_sales: number;
+    cash_received: number;
+    instapay_received: number;
+    other_payments: number;
+    opening_cash: number;
     difference: number;
   } | null>(null);
+
+  const printSummary = () => {
+    if (!result) return;
+    const money = (value: number) => `${Number(value || 0).toFixed(2)} EGP`;
+    const win = window.open("", "swift_shift_closing", "width=420,height=760");
+    if (!win) return;
+    win.document.write(`<!doctype html><html><head><title>Shift Closing</title><style>@page{size:80mm auto;margin:0}html,body{margin:0;padding:0;width:80mm;font:12px monospace}.receipt{width:72mm;margin:0 auto;padding:3mm 0}.center{text-align:center}.line{border-top:1px dashed #000;margin:6px 0}table{width:100%;border-collapse:collapse}td:last-child{text-align:right}.total{font-size:15px;font-weight:bold}</style></head><body><div class="receipt"><div class="center total">SHIFT CLOSING</div><div class="center">${result.closing_entry}</div><div class="line"></div><table><tr><td>Cashier</td><td>${fullName || ""}</td></tr><tr><td>Invoices</td><td>${result.invoices}</td></tr><tr><td>Items Sold</td><td>${result.items_sold}</td></tr><tr class="total"><td>Total Sales</td><td>${money(result.total_sales)}</td></tr></table><div class="line"></div><b>Payment Summary</b><table><tr><td>Cash</td><td>${money(result.cash_received)}</td></tr><tr><td>InstaPay</td><td>${money(result.instapay_received)}</td></tr>${result.other_payments ? `<tr><td>Other</td><td>${money(result.other_payments)}</td></tr>` : ""}</table><div class="line"></div><table><tr><td>Expenses</td><td>${money(result.total_expenses)}</td></tr><tr><td>Opening Cash</td><td>${money(result.opening_cash)}</td></tr><tr><td>Expected Closing</td><td>${money(result.expected_amount)}</td></tr><tr><td>Actual Closing</td><td>${money(Number(amount))}</td></tr><tr class="total"><td>Difference</td><td>${money(result.difference)}</td></tr></table><div class="line"></div><div class="center">Thank you</div></div><script>window.onload=function(){window.print();window.close()}</script></body></html>`);
+    win.document.close();
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -49,6 +67,7 @@ export function ClosingCashModal({ isOpen, onClose, onClosed }: ClosingCashModal
 
   const handleDone = () => {
     setLoggingOut(true);
+    printSummary();
     setResult(null);
     setAmount("");
     onClosed();
@@ -87,7 +106,7 @@ export function ClosingCashModal({ isOpen, onClose, onClosed }: ClosingCashModal
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="End Shift" showCloseButton={true} closeOnOverlayClick={false}>
+    <Modal isOpen={isOpen} onClose={onClose} title="Close Shift" showCloseButton={true} closeOnOverlayClick={false}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <p className="text-sm text-gray-600">
           Count the cash in the register and enter the total below to close your shift.
@@ -120,7 +139,7 @@ export function ClosingCashModal({ isOpen, onClose, onClosed }: ClosingCashModal
             Cancel
           </Button>
           <Button type="submit" variant="danger" size="lg" isLoading={isClosing} className="flex-1">
-            End Shift
+            Close Shift
           </Button>
         </div>
       </form>

@@ -16,6 +16,15 @@ interface PosSessionState {
   closeSession: (closingAmount: number) => Promise<{
     closing_entry: string;
     expected_amount: number;
+    total_expenses: number;
+    invoices: number;
+    items_sold: number;
+    total_sales: number;
+    cash_received: number;
+    instapay_received: number;
+    other_payments: number;
+    opening_cash: number;
+    payment_totals: Record<string, number>;
     difference: number;
   }>;
   clearSession: () => void;
@@ -79,6 +88,15 @@ export const usePosSessionStore = create<PosSessionState>((set) => ({
       return {
         closing_entry: data.closing_entry,
         expected_amount: data.expected_amount,
+        total_expenses: data.total_expenses,
+        invoices: data.invoices,
+        items_sold: data.items_sold,
+        total_sales: data.total_sales,
+        cash_received: data.cash_received,
+        instapay_received: data.instapay_received,
+        other_payments: data.other_payments,
+        opening_cash: data.opening_cash,
+        payment_totals: data.payment_totals,
         difference: data.difference,
       };
     } catch (err) {
